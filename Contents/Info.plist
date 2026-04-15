@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>HomeAssist DAX88 Multi-Zone Source</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>com.hamwi875.homeassist.dax88.multizonesource</string>
+
+	<key>CFBundleVersion</key>
+	<string>0.1.0</string>
+
+	<key>PluginVersion</key>
+	<string>0.1.0</string>
+
+	<key>ServerApiVersion</key>
+	<string>3.4</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+
+	<key>IndigoPluginName</key>
+	<string>HomeAssist DAX88 Multi-Zone Source</string>
+
+	<key>IndigoPluginAuthor</key>
+	<string>Community</string>
+
+	<key>IndigoPluginDescription</key>
+	<string>Multi-zone source selection for Dayton DAX88 zones exposed via Home Assistant Agent (xantech).</string>
+</dict>
+</plist>

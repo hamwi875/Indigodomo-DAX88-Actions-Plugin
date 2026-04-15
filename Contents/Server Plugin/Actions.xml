@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<Actions>
+    <Action id="hamwi875_dax88_multi_zone_action" uiPath="HomeAssist/DAX88">
+        <Name>HomeAssist: DAX88 Multi-Zone (Source / Off / Mute)</Name>
+        <CallbackMethod>doDax88MultiZone</CallbackMethod>
+
+        <ConfigUI>
+            <Field id="operation" type="menu" defaultValue="set_source">
+                <Label>Operation:</Label>
+                <List>
+                    <Option value="set_source">Set Source</Option>
+                    <Option value="turn_off">Turn Off</Option>
+                    <Option value="mute">Mute</Option>
+                    <Option value="unmute">Unmute</Option>
+                </List>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+
+            <Field id="turnOnFirst" type="checkbox" defaultValue="true" visibleBindingId="operation" visibleBindingValue="set_source">
+                <Label>Turn zones on first (only for Set Source)</Label>
+            </Field>
+
+            <Field id="delayMs" type="textfield" defaultValue="0">
+                <Label>Delay between zones (ms)</Label>
+            </Field>
+
+            <Field id="zoneA" type="menu" defaultValue="none">
+                <Label>Zone A</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneB" type="menu" defaultValue="none">
+                <Label>Zone B</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneC" type="menu" defaultValue="none">
+                <Label>Zone C</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneD" type="menu" defaultValue="none">
+                <Label>Zone D</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneE" type="menu" defaultValue="none">
+                <Label>Zone E</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneF" type="menu" defaultValue="none">
+                <Label>Zone F</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneG" type="menu" defaultValue="none">
+                <Label>Zone G</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+            <Field id="zoneH" type="menu" defaultValue="none">
+                <Label>Zone H</Label>
+                <List class="self" filter="" method="dax88ZoneList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+
+            <Field id="source" type="menu" defaultValue="none" visibleBindingId="operation" visibleBindingValue="set_source">
+                <Label>Source</Label>
+                <List class="self" filter="" method="dax88SourceList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+        </ConfigUI>
+    </Action>
+</Actions>
