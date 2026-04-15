@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Actions>
     <Action id="hamwi875_dax88_multi_zone_action" uiPath="HomeAssist/DAX88">
-        <Name>HomeAssist: DAX88 Multi-Zone (Source / Off / Mute)</Name>
+        <Name>HomeAssist: DAX88 Multi-Zone (Source / Off / Mute / Volume)</Name>
         <CallbackMethod>doDax88MultiZone</CallbackMethod>
 
         <ConfigUI>
@@ -9,6 +9,7 @@
                 <Label>Operation:</Label>
                 <List>
                     <Option value="set_source">Set Source</Option>
+                    <Option value="set_volume">Set Volume (%)</Option>
                     <Option value="turn_off">Turn Off</Option>
                     <Option value="mute">Mute</Option>
                     <Option value="unmute">Unmute</Option>
@@ -68,6 +69,12 @@
             <Field id="source" type="menu" defaultValue="none" visibleBindingId="operation" visibleBindingValue="set_source">
                 <Label>Source</Label>
                 <List class="self" filter="" method="dax88SourceList" dynamicReload="true"/>
+                <CallbackMethod>menuChanged</CallbackMethod>
+            </Field>
+
+            <Field id="volumePreset" type="menu" defaultValue="24" visibleBindingId="operation" visibleBindingValue="set_volume">
+                <Label>Volume preset (%)</Label>
+                <List class="self" filter="" method="volumePresetList" dynamicReload="true"/>
                 <CallbackMethod>menuChanged</CallbackMethod>
             </Field>
         </ConfigUI>
