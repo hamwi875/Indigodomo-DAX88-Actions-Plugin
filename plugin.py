@@ -1,18 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# HomeAssist DAX88 Multi-Zone Source
-# plugin.py (republished to match Actions.xml with:
-#   Action id: hamwi875_dax88_multi_zone_action
-#   CallbackMethod: doDax88MultiZone
-#   Dynamic lists: dax88ZoneList, dax88SourceList
-#   Operation menu: set_source / turn_off / mute / unmute
-#
-# Install path:
-#   HomeAssistDAX88MultiZoneSource.indigoPlugin/Contents/Server Plugin/plugin.py
-#
-# After editing this file:
-#   Restart Indigo Server (recommended), then reopen the action config UI.
-#
 import indigo
 import json
 import time
@@ -26,7 +12,6 @@ class Plugin(indigo.PluginBase):
     def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs):
         super().__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 
-        # Optional log level (only used if you have PluginConfig.xml with logLevel)
         try:
             self.logLevel = int(pluginPrefs.get("logLevel", logging.INFO))
             self.indigo_log_handler.setLevel(self.logLevel)
@@ -34,11 +19,8 @@ class Plugin(indigo.PluginBase):
         except Exception:
             pass
 
-        # Home Assistant Agent plugin and DAX88 entity prefix
         self.haa_plugin_id = "no.homeassistant.plugin"
         self.dax88_prefix = "media_player.xantech_dax88_"
-
-        # Set True temporarily to spam discovery diagnostics in the log
         self.debug_discovery = False
 
     def startup(self):
@@ -55,12 +37,6 @@ class Plugin(indigo.PluginBase):
         return valuesDict
 
     def dax88ZoneList(self, _filter="", _valuesDict=None, _typeId=0, _targetId=0):
-        """
-        Dynamic list for Zone A..H menu fields.
-
-        IMPORTANT: Indigo menu dynamic lists must NOT return empty-string IDs.
-        We always use SENTINEL_NONE ("none") for the no-selection row.
-        """
         zones = [(SENTINEL_NONE, "-- none --")]
         matched = 0
 
@@ -81,16 +57,10 @@ class Plugin(indigo.PluginBase):
                     pass
 
         zones[1:] = sorted(zones[1:], key=lambda x: (x[1].lower(), int(x[0])))
-
-        # Keep this as INFO; it's useful to confirm the list is actually being called.
         self.logger.info(f"[DAX88] dax88ZoneList returning {matched} zone(s)")
         return zones
 
     def dax88SourceList(self, _filter="", valuesDict=None, _typeId=0, _targetId=0):
-        """
-        Dynamic list for Source menu field.
-        Uses the first selected zone (A..H) to read that device's states['source_list'].
-        """
         valuesDict = valuesDict or {}
         zone_id = self._get_selected_zone_for_sources(valuesDict)
 
@@ -100,12 +70,30 @@ class Plugin(indigo.PluginBase):
 
         return [(SENTINEL_NONE, "-- select source --")] + [(s, s) for s in sources]
 
+    def volumePresetList(self, _filter="", _valuesDict=None, _typeId=0, _targetId=0):
+        """
+        0..99 in steps of 3, plus 100.
+        Menu IDs must be non-empty strings.
+        """
+        vals = list(range(0, 100, 3))  # 0..99
+        if vals and vals[-1] != 99:
+            vals.append(99)
+        vals.append(100)
+
+        seen = set()
+        out = []
+        for v in vals:
+            if v in seen:
+                continue
+            seen.add(v)
+            out.append((str(v), str(v)))
+        return out
+
     # ---------------- Validation ----------------
 
     def validateActionConfigUi(self, valuesDict, typeId, devId):
         errors = indigo.Dict()
 
-        # In Actions.xml style, typeId is the Action id from Actions.xml
         if typeId != "hamwi875_dax88_multi_zone_action":
             return True, valuesDict, errors
 
@@ -120,6 +108,16 @@ class Plugin(indigo.PluginBase):
         if operation == "set_source":
             if valuesDict.get("source", SENTINEL_NONE) in (SENTINEL_NONE, "", None):
                 errors["source"] = "Select a source."
+                return False, valuesDict, errors
+
+        if operation == "set_volume":
+            try:
+                vol = int(valuesDict.get("volumePreset", ""))
+            except Exception:
+                errors["volumePreset"] = "Select a volume preset."
+                return False, valuesDict, errors
+            if vol < 0 or vol > 100:
+                errors["volumePreset"] = "Volume must be 0–100."
                 return False, valuesDict, errors
 
         # delayMs
@@ -171,9 +169,18 @@ class Plugin(indigo.PluginBase):
             self.logger.warning("[DAX88] No zones selected; nothing to do.")
             return
 
+        volume = None
+        if operation == "set_volume":
+            try:
+                volume = int(values.get("volumePreset", ""))
+            except Exception:
+                self.logger.error(f"[DAX88] volumePreset is not an int: {values.get('volumePreset')!r}")
+                return
+            volume = max(0, min(100, volume))
+
         self.logger.info(
             f"[DAX88] operation={operation!r}, zones={zone_ids}, delayMs={delay_ms}, "
-            f"turnOnFirst={turn_on_first}, source={source!r}"
+            f"turnOnFirst={turn_on_first}, source={source!r}, volume={volume!r}"
         )
 
         for idx, zid in enumerate(zone_ids, start=1):
@@ -188,26 +195,26 @@ class Plugin(indigo.PluginBase):
 
             try:
                 if operation == "turn_off":
-                    # Turn off via Indigo (routes to HAA device action)
                     indigo.device.turnOff(zid)
 
                 elif operation == "set_source":
                     if source in (SENTINEL_NONE, "", None):
                         self.logger.error("[DAX88] No source selected.")
                         return
-
                     if turn_on_first:
                         indigo.device.turnOn(zid)
-
-                    # Use HAA "hidden" action id
                     haa.executeAction(
                         "media_play_set_source",
                         deviceId=zid,
                         props={"media_source": source}
                     )
 
+                elif operation == "set_volume":
+                    # Indigo brightness is 0–100 (%) which matches your desired UI.
+                    indigo.device.turnOn(zid)
+                    indigo.dimmer.setBrightness(zid, value=volume)
+
                 elif operation == "mute":
-                    # Uses HAA hidden action IDs (as shown in the HAA Actions.xml you pasted earlier)
                     haa.executeAction("media_player_volume_mute", deviceId=zid, props={})
 
                 elif operation == "unmute":
@@ -226,10 +233,6 @@ class Plugin(indigo.PluginBase):
     # ---------------- Discovery helpers ----------------
 
     def _get_haa_address(self, dev: indigo.Device):
-        """
-        Return HA entity_id for an HAA-created device.
-        Prefer dev.address; fallback to ownerProps[no.homeassistant.plugin]['address'].
-        """
         try:
             if hasattr(dev, "address") and isinstance(dev.address, str) and dev.address:
                 return dev.address
@@ -249,15 +252,11 @@ class Plugin(indigo.PluginBase):
     def _is_dax88_zone_device(self, dev: indigo.Device) -> bool:
         if dev.pluginId != self.haa_plugin_id:
             return False
-
-        # Case-insensitive device type id check
         if str(dev.deviceTypeId).lower() != "ha_media_player":
             return False
-
         addr = self._get_haa_address(dev)
         if not isinstance(addr, str):
             return False
-
         return addr.lower().startswith(self.dax88_prefix.lower())
 
     def _get_selected_zone_for_sources(self, valuesDict):
@@ -272,11 +271,6 @@ class Plugin(indigo.PluginBase):
         return None
 
     def _parse_source_list_from_zone(self, zone_dev_id: int):
-        """
-        Reads zone.states['source_list'], which often arrives as a JSON string like:
-          '["Sonos","WiFi", ...]'
-        Returns list[str]. Falls back to DEFAULT_SOURCES.
-        """
         try:
             dev = indigo.devices[zone_dev_id]
         except Exception:
@@ -292,7 +286,6 @@ class Plugin(indigo.PluginBase):
         if isinstance(raw, str):
             s = raw.strip()
 
-            # Try JSON first
             try:
                 parsed = json.loads(s)
                 if isinstance(parsed, list) and parsed:
@@ -300,7 +293,6 @@ class Plugin(indigo.PluginBase):
             except Exception:
                 pass
 
-            # Fallback manual parse
             if s.startswith("[") and s.endswith("]"):
                 inner = s[1:-1].strip()
                 if inner:
